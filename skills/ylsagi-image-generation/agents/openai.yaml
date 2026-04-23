@@ -1,0 +1,7 @@
+interface:
+  display_name: "Ylsagi Image Generation"
+  short_description: "通过 Responses 网关生成并落盘图片，支持 Codex 附件参考图"
+  default_prompt: "Use $ylsagi-image-generation whenever you need to generate an image, optionally use Codex attachments as references, and save the streamed result to a local file."
+
+policy:
+  allow_implicit_invocation: true
