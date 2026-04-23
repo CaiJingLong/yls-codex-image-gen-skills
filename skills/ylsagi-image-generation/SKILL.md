@@ -133,7 +133,7 @@ bun "$SKILL_DIR/scripts/generate-image-via-responses.mjs" \
 
 - `401 Unauthorized`：当前 Codex 鉴权无效、过期，或 `auth.json` 里没有可用的 `OPENAI_API_KEY`
 - 即使默认使用 `moderation: "low"`，提示词和生成结果仍然会经过内容策略过滤；`low` 只是比 `auto` 更宽松，不是关闭过滤
-- `moderation_blocked` / `image_generation_user_error`：多见于真实人物写实图；脚本会直接输出原始错误和“去真人指名、保留风格与场景”的改写建议，但不会自动改你的 prompt
+- `moderation_blocked` / `image_generation_user_error`：表示请求被内容策略拦截；脚本默认只输出网关原始错误，不再额外拼接推断性原因或参考改写。是否以及如何改 prompt，需要由用户明确决定
 
 ## 脚本位置
 

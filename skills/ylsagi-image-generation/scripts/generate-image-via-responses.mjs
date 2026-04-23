@@ -218,14 +218,6 @@ function formatGatewayErrorMessage(errorPayload) {
 
   const lines = [`Gateway image generation failed (${errorType}/${errorCode}): ${errorMessage}`];
 
-  if (errorCode === "moderation_blocked" || errorType === "image_generation_user_error") {
-    lines.push("说明: 这类拦截通常发生在真实人物的照片级生成请求上。");
-    lines.push("建议: 不要直接使用真实人物姓名，改成泛化描述，并保留服装、场景、构图和灯光。");
-    lines.push(
-      '参考改写: "Photorealistic event photo of a glamorous actress with striking features, wearing a black leather stage outfit on a green-and-black GPU keynote stage, holding a graphics card, confident presentation pose, cinematic lighting, ultra detailed."',
-    );
-  }
-
   return lines.join("\n");
 }
 

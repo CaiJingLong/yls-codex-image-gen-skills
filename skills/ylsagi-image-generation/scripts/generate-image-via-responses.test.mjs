@@ -55,7 +55,7 @@ describe("collectImageResultFromSse", () => {
     );
   });
 
-  test("surfaces a moderation hint when the gateway blocks the request", async () => {
+  test("returns the raw moderation error without injected explanations", async () => {
     const stream = streamFromChunks([
       "event: error\n",
       "data: {\"type\":\"error\",\"error\":{\"type\":\"image_generation_user_error\",\"code\":\"moderation_blocked\",\"message\":\"Your request was rejected by the safety system.\"}}\n\n",
@@ -66,8 +66,9 @@ describe("collectImageResultFromSse", () => {
       throw new Error("Expected collectImageResultFromSse to throw.");
     } catch (error) {
       expect(error.message).toContain("moderation_blocked");
-      expect(error.message).toContain("真实人物");
-      expect(error.message).toContain("不要直接使用真实人物姓名");
+      expect(error.message).not.toContain("说明:");
+      expect(error.message).not.toContain("建议:");
+      expect(error.message).not.toContain("参考改写:");
     }
   });
 });
