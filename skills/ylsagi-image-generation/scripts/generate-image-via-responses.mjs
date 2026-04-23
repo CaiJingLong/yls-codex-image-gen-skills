@@ -17,6 +17,10 @@ const HELP_TEXT = `Usage:
     --prompt "A red paper-cut style dragon poster" \\
     --output output/dragon
 
+  node "${DEFAULT_SKILL_DIR_HINT}/scripts/generate-image-via-responses.mjs" \\
+    --prompt "A red paper-cut style dragon poster" \\
+    --output output/dragon
+
 Options:
   --prompt <text>         Required. Prompt sent to the Responses API.
   --prompt-file <path>    Optional. Read the prompt from a local UTF-8 text file.
@@ -35,6 +39,7 @@ Options:
                           If --api-key and OPENAI_API_KEY are both missing, the script
                           prefers Codex auth at ~/.codex/auth.json (or $CODEX_HOME/auth.json)
                           before falling back to OPENAI_API_KEY.
+                          Runtime: Bun or Node.js 18+.
   --help                  Show this help message.
 `;
 

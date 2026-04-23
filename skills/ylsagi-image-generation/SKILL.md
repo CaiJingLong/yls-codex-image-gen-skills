@@ -13,10 +13,20 @@ description: Use when generating images and saving the result to a local file th
 SKILL_DIR="${CODEX_HOME:-$HOME/.codex}/skills/ylsagi-image-generation"
 ```
 
+这个脚本本身可以用 `bun` 或 `node` 执行。下面示例默认写 `bun`；如果你的环境只有 Node.js，也可以把命令前缀等价替换成 `node`。建议 Node.js 版本至少为 `18+`。
+
 ## 默认命令
 
 ```bash
 bun "$SKILL_DIR/scripts/generate-image-via-responses.mjs" \
+  --prompt "A cinematic tea brand poster with warm morning light" \
+  --output output/tea-poster
+```
+
+等价的 `node` 写法：
+
+```bash
+node "$SKILL_DIR/scripts/generate-image-via-responses.mjs" \
   --prompt "A cinematic tea brand poster with warm morning light" \
   --output output/tea-poster
 ```
