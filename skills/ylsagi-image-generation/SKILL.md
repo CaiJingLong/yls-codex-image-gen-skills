@@ -77,6 +77,14 @@ output/2026/04/25/143000-tea-poster.txt
 
 不要覆盖、删除或替换已经生成出的图片。图片文字、版式或内容不准确时，只能改 prompt 后重新生成，并保留旧版本。
 
+如果图片之后要提交，先确认图片格式已命中 Git LFS 规则：
+
+```bash
+git check-attr filter -- output/YYYY/MM/DD/<stem>.<ext>
+```
+
+结果应为 `filter: lfs`。如果是 `filter: unspecified`，先把该图片格式加入仓库 `.gitattributes`，再暂存图片。
+
 ## Default Command
 
 推荐先写 prompt 文件，再用 `--prompt-file` 生成，这样 `.txt` 与实际提交内容一致：
