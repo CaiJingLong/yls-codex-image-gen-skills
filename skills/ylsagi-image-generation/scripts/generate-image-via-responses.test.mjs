@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 
 import {
+  buildCodexHeaders,
   buildRequestBody,
   collectImageResultFromSse,
   decodeImageResult,
@@ -53,6 +54,29 @@ describe("collectImageResultFromSse", () => {
     await expect(collectImageResultFromSse(stream)).rejects.toThrow(
       "No image_generation_call result found in streamed SSE events.",
     );
+  });
+
+  test("passes raw SSE blocks to the debug callback", async () => {
+    const base64 = "iVBORw0KGgo=";
+    const debugBlocks = [];
+    const stream = streamFromChunks([
+      "event: response.created\n",
+      "data: {\"type\":\"response.created\"}\n\n",
+      "event: response.output_item.done\n",
+      "data: {\"type\":\"response.output_item.done\",\"item\":{\"type\":\"image_generation_call\",\"result\":\"",
+      base64,
+      "\"}}\n\n",
+    ]);
+
+    await expect(
+      collectImageResultFromSse(stream, {
+        onSseBlock: (block) => debugBlocks.push(block),
+      }),
+    ).resolves.toBe(base64);
+    expect(debugBlocks).toEqual([
+      "event: response.created\ndata: {\"type\":\"response.created\"}",
+      `event: response.output_item.done\ndata: {"type":"response.output_item.done","item":{"type":"image_generation_call","result":"${base64}"}}`,
+    ]);
   });
 
   test("returns the raw moderation error without injected explanations", async () => {
@@ -115,6 +139,7 @@ describe("parseArgs", () => {
       prompt: "draw a lantern",
       output: "output/lantern",
       references: ["refs/a.png", "https://example.com/ref.png"],
+      debugSse: false,
     });
   });
 
@@ -129,6 +154,23 @@ describe("parseArgs", () => {
     ).toMatchObject({
       promptFile: "output/prompt.txt",
       output: "output/lantern",
+      debugSse: false,
+    });
+  });
+
+  test("accepts --debug-sse as a boolean flag", () => {
+    expect(
+      parseArgs([
+        "--prompt",
+        "draw a lantern",
+        "--output",
+        "output/lantern",
+        "--debug-sse",
+      ]),
+    ).toMatchObject({
+      prompt: "draw a lantern",
+      output: "output/lantern",
+      debugSse: true,
     });
   });
 
@@ -153,7 +195,7 @@ describe("buildRequestBody", () => {
         prompt: "draw a small paper lantern",
       }),
     ).toEqual({
-      model: "gpt-5.4",
+      model: "gpt-5.4-mini",
       input: "draw a small paper lantern",
       stream: true,
       tools: [
@@ -173,7 +215,7 @@ describe("buildRequestBody", () => {
         toolOverrides: { moderation: "auto" },
       }),
     ).toEqual({
-      model: "gpt-5.4",
+      model: "gpt-5.4-mini",
       input: "draw a small paper lantern",
       stream: true,
       tools: [
@@ -197,7 +239,7 @@ describe("buildRequestBody", () => {
         toolOverrides: { size: "1536x1024" },
       }),
     ).toEqual({
-      model: "gpt-5.4",
+      model: "gpt-5.4-mini",
       input: [
         {
           role: "user",
@@ -217,6 +259,32 @@ describe("buildRequestBody", () => {
           size: "1536x1024",
         },
       ],
+    });
+  });
+});
+
+describe("buildCodexHeaders", () => {
+  test("adds the Codex CLI user agent by default", () => {
+    expect(buildCodexHeaders({ apiKey: "sk-test" })).toEqual({
+      "content-type": "application/json",
+      authorization: "Bearer sk-test",
+      "user-agent": "codex-cli",
+    });
+  });
+
+  test("passes ChatGPT-Account-Id when present in env", () => {
+    expect(
+      buildCodexHeaders({
+        apiKey: "sk-test",
+        env: {
+          CHATGPT_ACCOUNT_ID: " account_123 ",
+        },
+      }),
+    ).toEqual({
+      "content-type": "application/json",
+      authorization: "Bearer sk-test",
+      "user-agent": "codex-cli",
+      "ChatGPT-Account-Id": "account_123",
     });
   });
 });

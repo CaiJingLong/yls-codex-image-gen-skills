@@ -86,7 +86,7 @@ bun "$SKILL_DIR/scripts/generate-image-via-responses.mjs" \
 
 - 固定走 `POST /responses`
 - 固定带 `stream: true`
-- 外层模型默认 `gpt-5.4`
+- 外层模型默认 `gpt-5.4-mini`
 - 图片工具默认 `{"type":"image_generation","model":"gpt-image-2","moderation":"low"}`
 - 支持多张参考图，多个 `--reference` 会按传入顺序转换为多个 `input_image`
 - Codex 输入框里附带的图片，如果线程上下文已经暴露为本地绝对路径，也按普通本地参考图处理，直接传给 `--reference`

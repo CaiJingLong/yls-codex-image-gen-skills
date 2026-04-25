@@ -6,7 +6,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const DEFAULT_BASE_URL = "https://code.ylsagi.com/codex";
-const DEFAULT_OUTER_MODEL = "gpt-5.4";
+const DEFAULT_OUTER_MODEL = "gpt-5.4-mini";
 const DEFAULT_IMAGE_MODEL = "gpt-image-2";
 const DEFAULT_IMAGE_MODERATION = "low";
 const DEFAULT_CODEX_HOME = path.join(os.homedir(), ".codex");
@@ -40,6 +40,7 @@ Options:
                           prefers Codex auth at ~/.codex/auth.json (or $CODEX_HOME/auth.json)
                           before falling back to OPENAI_API_KEY.
                           Runtime: Bun or Node.js 18+.
+  --debug-sse             Optional. Print raw SSE blocks to stderr for debugging.
   --help                  Show this help message.
 `;
 
@@ -94,6 +95,29 @@ export function resolveCodexAuthPath(env = process.env) {
       ? env.CODEX_HOME.trim()
       : DEFAULT_CODEX_HOME;
   return path.join(codexHome, DEFAULT_CODEX_AUTH_FILE);
+}
+
+export function resolveCodexAccountId(env = process.env) {
+  const accountId = env?.CHATGPT_ACCOUNT_ID;
+  if (typeof accountId === "string" && accountId.trim() !== "") {
+    return accountId.trim();
+  }
+  return undefined;
+}
+
+export function buildCodexHeaders({ apiKey, env = process.env } = {}) {
+  const headers = {
+    "content-type": "application/json",
+    authorization: `Bearer ${apiKey}`,
+    "user-agent": "codex-cli",
+  };
+
+  const accountId = resolveCodexAccountId(env);
+  if (accountId) {
+    headers["ChatGPT-Account-Id"] = accountId;
+  }
+
+  return headers;
 }
 
 export async function resolveApiKey({
@@ -238,7 +262,7 @@ function extractGatewayErrorFromEvent(parsedEvent) {
   return null;
 }
 
-export async function collectImageResultFromSse(stream) {
+export async function collectImageResultFromSse(stream, { onSseBlock } = {}) {
   if (!stream) {
     throw new Error("Response body is empty.");
   }
@@ -260,6 +284,7 @@ export async function collectImageResultFromSse(stream) {
       while (boundary !== -1) {
         const block = buffered.slice(0, boundary);
         buffered = buffered.slice(boundary + 2);
+        onSseBlock?.(block);
         const parsedEvent = parseSseBlock(block);
         const gatewayError = extractGatewayErrorFromEvent(parsedEvent);
         if (gatewayError) {
@@ -280,6 +305,7 @@ export async function collectImageResultFromSse(stream) {
 
     buffered += decoder.decode().replace(/\r/g, "");
     if (buffered.trim()) {
+      onSseBlock?.(buffered);
       const parsedEvent = parseSseBlock(buffered);
       const gatewayError = extractGatewayErrorFromEvent(parsedEvent);
       if (gatewayError) {
@@ -487,6 +513,7 @@ export function parseArgs(argv) {
   const options = {
     apiKeyEnv: "OPENAI_API_KEY",
     baseUrl: DEFAULT_BASE_URL,
+    debugSse: false,
     outerModel: DEFAULT_OUTER_MODEL,
     imageModel: DEFAULT_IMAGE_MODEL,
     references: [],
@@ -536,6 +563,9 @@ export function parseArgs(argv) {
         options.toolOverrides = parseToolOverrides(takeOptionValue(argv, index, "--tool-json"));
         index += 1;
         break;
+      case "--debug-sse":
+        options.debugSse = true;
+        break;
       case "--help":
         options.help = true;
         break;
@@ -579,10 +609,7 @@ export async function generateImageViaResponses(options) {
   const apiKey = await resolveApiKey(options);
   const response = await fetch(buildResponsesUrl(options.baseUrl), {
     method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${apiKey}`,
-    },
+    headers: buildCodexHeaders({ apiKey, env: options.env }),
     body: JSON.stringify(requestBody),
   });
 
@@ -593,7 +620,13 @@ export async function generateImageViaResponses(options) {
     );
   }
 
-  const base64Result = await collectImageResultFromSse(response.body);
+  const base64Result = await collectImageResultFromSse(response.body, {
+    onSseBlock: options.debugSse
+      ? (block) => {
+          process.stderr.write(`--- SSE BLOCK ---\n${block}\n\n`);
+        }
+      : undefined,
+  });
   const imageBytes = decodeImageResult(base64Result);
   const inferredExtension = detectImageExtension(imageBytes);
   const outputPath = resolveOutputPath(options.output, inferredExtension);
