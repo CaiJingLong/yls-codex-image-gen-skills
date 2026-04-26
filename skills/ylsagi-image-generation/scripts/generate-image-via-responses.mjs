@@ -34,7 +34,12 @@ Options:
   --base-url <url>        Optional. Default: ${DEFAULT_BASE_URL}
   --outer-model <name>    Optional. Default: ${DEFAULT_OUTER_MODEL}
   --image-model <name>    Optional. Default: ${DEFAULT_IMAGE_MODEL}
+  --size <value>          Optional. Sets image_generation.size, e.g. 1536x1024.
+  --quality <value>       Optional. Sets image_generation.quality.
+  --moderation <value>    Optional. Sets image_generation.moderation.
+  --background <value>    Optional. Sets image_generation.background when supported.
   --tool-json <json>      Optional. Extra image_generation tool fields as JSON.
+                          Direct image_generation flags override matching JSON fields.
                           Default tool config includes moderation: "${DEFAULT_IMAGE_MODERATION}".
                           If --api-key and OPENAI_API_KEY are both missing, the script
                           prefers Codex auth at ~/.codex/auth.json (or $CODEX_HOME/auth.json)
@@ -510,6 +515,7 @@ export async function resolvePromptText(options, { readFileImpl = readFile } = {
 }
 
 export function parseArgs(argv) {
+  const directToolOverrides = {};
   const options = {
     apiKeyEnv: "OPENAI_API_KEY",
     baseUrl: DEFAULT_BASE_URL,
@@ -559,6 +565,22 @@ export function parseArgs(argv) {
         options.imageModel = takeOptionValue(argv, index, "--image-model");
         index += 1;
         break;
+      case "--size":
+        directToolOverrides.size = takeOptionValue(argv, index, "--size");
+        index += 1;
+        break;
+      case "--quality":
+        directToolOverrides.quality = takeOptionValue(argv, index, "--quality");
+        index += 1;
+        break;
+      case "--moderation":
+        directToolOverrides.moderation = takeOptionValue(argv, index, "--moderation");
+        index += 1;
+        break;
+      case "--background":
+        directToolOverrides.background = takeOptionValue(argv, index, "--background");
+        index += 1;
+        break;
       case "--tool-json":
         options.toolOverrides = parseToolOverrides(takeOptionValue(argv, index, "--tool-json"));
         index += 1;
@@ -573,6 +595,11 @@ export function parseArgs(argv) {
         throw new Error(`Unknown argument: ${arg}`);
     }
   }
+
+  options.toolOverrides = {
+    ...options.toolOverrides,
+    ...directToolOverrides,
+  };
 
   if (options.help) {
     return options;

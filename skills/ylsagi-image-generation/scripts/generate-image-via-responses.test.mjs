@@ -174,6 +174,57 @@ describe("parseArgs", () => {
     });
   });
 
+  test("accepts common image_generation tool fields as direct flags", () => {
+    expect(
+      parseArgs([
+        "--prompt",
+        "draw a lantern",
+        "--output",
+        "output/lantern",
+        "--size",
+        "1536x1024",
+        "--quality",
+        "high",
+        "--moderation",
+        "auto",
+        "--background",
+        "transparent",
+      ]),
+    ).toMatchObject({
+      prompt: "draw a lantern",
+      output: "output/lantern",
+      toolOverrides: {
+        size: "1536x1024",
+        quality: "high",
+        moderation: "auto",
+        background: "transparent",
+      },
+    });
+  });
+
+  test("direct image_generation flags override matching --tool-json fields", () => {
+    expect(
+      parseArgs([
+        "--prompt",
+        "draw a lantern",
+        "--output",
+        "output/lantern",
+        "--size",
+        "1536x1024",
+        "--quality",
+        "high",
+        "--tool-json",
+        "{\"size\":\"1024x1024\",\"quality\":\"low\",\"partial_images\":2}",
+      ]),
+    ).toMatchObject({
+      toolOverrides: {
+        size: "1536x1024",
+        quality: "high",
+        partial_images: 2,
+      },
+    });
+  });
+
   test("rejects passing both --prompt and --prompt-file", () => {
     expect(() =>
       parseArgs([

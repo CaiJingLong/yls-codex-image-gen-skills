@@ -158,9 +158,9 @@ Render the exact Chinese text above. Do not translate, rewrite, romanize, replac
 
 复杂主体，例如头发、毛发、烟雾、玻璃、液体、半透明材质、强反光物体、软阴影，不要默认承诺透明抠图效果。先向用户说明风险，必要时改 prompt 重新生成或让用户确认替代方案。
 
-## Tool JSON
+## Image Tool Parameters
 
-需要额外图片参数时，用 `--tool-json`。常见参数和限制见 `references/image-tool-json.md`。
+常用图片参数直接用显式参数传入。常见参数和限制见 `references/image-tool-json.md`。
 
 示例：
 
@@ -168,7 +168,8 @@ Render the exact Chinese text above. Do not translate, rewrite, romanize, replac
 /Users/cai/.bun/bin/bun "$SKILL_DIR/scripts/generate-image-via-responses.mjs" \
   --prompt-file output/2026/04/25/145000-robot-gardener.txt \
   --output output/2026/04/25/145000-robot-gardener \
-  --tool-json '{"size":"1536x1024","quality":"high"}'
+  --size 1536x1024 \
+  --quality high
 ```
 
 `--prompt` 和 `--prompt-file` 二选一，不要同时传。
@@ -179,7 +180,24 @@ Render the exact Chinese text above. Do not translate, rewrite, romanize, replac
 /Users/cai/.bun/bin/bun "$SKILL_DIR/scripts/generate-image-via-responses.mjs" \
   --prompt-file output/2026/04/25/145500-poster.txt \
   --output output/2026/04/25/145500-poster \
-  --tool-json '{"moderation":"auto"}'
+  --moderation auto
+```
+
+支持的常用显式参数：
+
+- `--size <value>`：设置 `image_generation.size`
+- `--quality <value>`：设置 `image_generation.quality`
+- `--moderation <value>`：设置 `image_generation.moderation`
+- `--background <value>`：设置 `image_generation.background`，只在确认当前模型/网关支持时使用
+
+非常规工具字段仍然可以用 `--tool-json` 兜底。显式参数会覆盖 `--tool-json` 里的同名字段：
+
+```bash
+/Users/cai/.bun/bin/bun "$SKILL_DIR/scripts/generate-image-via-responses.mjs" \
+  --prompt-file output/2026/04/25/150000-experimental.txt \
+  --output output/2026/04/25/150000-experimental \
+  --tool-json '{"partial_images":2}' \
+  --size 1536x1024
 ```
 
 ## Defaults
@@ -226,6 +244,6 @@ Render the exact Chinese text above. Do not translate, rewrite, romanize, replac
 ## Reference Map
 
 - `references/prompting.md`: 复杂 prompt、参考图角色、编辑 invariants、文字、透明背景和结果检查。
-- `references/image-tool-json.md`: `--tool-json`、`gpt-image-2` quality、size、moderation 和透明背景限制。
+- `references/image-tool-json.md`: 显式图片参数、`--tool-json` 兜底、`gpt-image-2` quality、size、moderation 和透明背景限制。
 - `references/sample-prompts.md`: 常见任务的 copy/paste prompt 模板。
 - `scripts/generate-image-via-responses.mjs`: ylsagi Responses 网关生图脚本。

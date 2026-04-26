@@ -1,6 +1,6 @@
-# Image Tool JSON Reference
+# Image Tool Parameters Reference
 
-Use this reference when a request needs explicit image tool parameters through `--tool-json`.
+Use this reference when a request needs explicit image tool parameters. Prefer direct flags for common fields, and keep `--tool-json` for uncommon or experimental fields.
 
 The ylsagi script sends a Responses request with this default image tool configuration:
 
@@ -8,7 +8,14 @@ The ylsagi script sends a Responses request with this default image tool configu
 {"type":"image_generation","model":"gpt-image-2","moderation":"low"}
 ```
 
-`--tool-json` merges extra fields into that image tool object. Pass only fields you intentionally need.
+Direct flags set common fields on that image tool object:
+
+- `--size <value>` sets `size`
+- `--quality <value>` sets `quality`
+- `--moderation <value>` sets `moderation`
+- `--background <value>` sets `background` when the selected model and gateway support it
+
+`--tool-json` still merges extra fields into the image tool object. Direct flags override matching fields from `--tool-json`, regardless of argument order.
 
 ## Common Examples
 
@@ -18,7 +25,8 @@ Landscape image:
 /Users/cai/.bun/bin/bun "$SKILL_DIR/scripts/generate-image-via-responses.mjs" \
   --prompt-file output/2026/04/25/143000-product-hero.txt \
   --output output/2026/04/25/143000-product-hero \
-  --tool-json '{"size":"1536x1024","quality":"high"}'
+  --size 1536x1024 \
+  --quality high
 ```
 
 Fast square draft:
@@ -27,7 +35,8 @@ Fast square draft:
 /Users/cai/.bun/bin/bun "$SKILL_DIR/scripts/generate-image-via-responses.mjs" \
   --prompt-file output/2026/04/25/143500-icon-draft.txt \
   --output output/2026/04/25/143500-icon-draft \
-  --tool-json '{"size":"1024x1024","quality":"low"}'
+  --size 1024x1024 \
+  --quality low
 ```
 
 Default moderation:
@@ -36,7 +45,17 @@ Default moderation:
 /Users/cai/.bun/bin/bun "$SKILL_DIR/scripts/generate-image-via-responses.mjs" \
   --prompt-file output/2026/04/25/144000-poster.txt \
   --output output/2026/04/25/144000-poster \
-  --tool-json '{"moderation":"auto"}'
+  --moderation auto
+```
+
+Uncommon tool field:
+
+```bash
+/Users/cai/.bun/bin/bun "$SKILL_DIR/scripts/generate-image-via-responses.mjs" \
+  --prompt-file output/2026/04/25/144500-preview.txt \
+  --output output/2026/04/25/144500-preview \
+  --tool-json '{"partial_images":2}' \
+  --size 1536x1024
 ```
 
 ## Quality
@@ -80,7 +99,7 @@ If the user explicitly requires true/native transparency or the subject is compl
 
 ## Moderation
 
-This skill defaults to `moderation: "low"`. That is not policy bypass and does not disable safety filtering. If the user asks for OpenAI's default strictness, pass `{"moderation":"auto"}`.
+This skill defaults to `moderation: "low"`. That is not policy bypass and does not disable safety filtering. If the user asks for OpenAI's default strictness, pass `--moderation auto`.
 
 ## Unsupported or Risky Fields
 
